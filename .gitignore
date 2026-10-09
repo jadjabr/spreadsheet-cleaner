@@ -1,0 +1,17 @@
+.venv/
+output/
+*.numbers
+__pycache__/
+.DS_Store
+
+# Only the 5 demo files in input are tracked
+input/*
+!input/customers_east.csv
+!input/customers_west.csv
+!input/newsletter_signups.csv
+!input/crm_export.xlsx
+!input/trade_show_leads.xlsx
+
+# Local agent-skill symlinks that point into .venv
+.agents/
+.claude/

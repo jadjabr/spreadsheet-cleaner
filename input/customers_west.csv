@@ -1,0 +1,18 @@
+first_name,last_name,email,phone,signup_date,city,state
+Emma,Alvarez,emma.alvarez@example.com,512-555-0112,"Oct 31, 2020",Austin,TX
+Grace   ,Romano  ,  GRACE.ROMANO@EXAMPLE.COM,+1 206 555 0100,02/23/2020, Seattle,WA
+ Grace  ,Morgan,GRACE.MORGAN@EXAMPLE.COM,404 555 0126,2024-12-07,Atlanta,GA
+Omar  ,  Hughes,omar.hughes@example.com,+1 617 555 0130,12/14/21,Boston  ,MA
+  Noah,Delgado,noah.delgado@example.com,+1 303 555 0107,2019-11-23,Denver,CO
+Priya  ,  Reyes  ,  priya.reyes@example.com,2125550137,06-13-2024,New  York,NY
+ Mateo,  Carter ,mateo.carter@example.com,312-555-0124,10/17/20,Chicago,IL
+  Olivia,Patel   ,Olivia.Patel@Example.Com,1-617-555-0133,08/20/2022,Boston  ,MA
+ Olivia,Sullivan,olivia.sullivan@example.com   ,1-617-555-0115,07/16/22,  Boston,MA
+Wei   ,Carter,wei.carter@example.com,212.555.0131,2022-05-07,New  York,NY
+Nora,Fischer,nora.fischer@example.com,212.555.0125,2023/04/26,New York,NY
+Chloe, Brooks  ,Chloe.Brooks@Example.Com,3035550120,22-Jul-2025,  Denver ,CO
+Olivia  ,Haddad, Olivia.Haddad@Example.Com   ,3125550122,"Sep 18, 2024",Chicago  ,IL
+Ethan,Bennett ,   ethan.bennett@example.com,5035550104,2019/11/19,Portland,OR
+Olivia,Haddad  ,Olivia.Haddad@Example.Com,1-312-555-0122,2024/09/18,Chicago,IL
+   Grace,Romano, grace.romano@example.com,206.555.0100,02/23/20,Seattle,WA
+Mateo ,Morgan,  mateo.morgan@example.com ,+1 503 555 0129,10-09-2020,Portland,OR
