@@ -203,6 +203,11 @@ def write_workbook(df, summary, per_file, output_path):
 
         header_rows = {"Cleaned Data": [1], "Summary": [1, file_header_row]}
         for ws in (data_sheet, sheet):
+            # Text from the input files that starts with "=" must stay text, not become a live formula.
+            for row in ws.iter_rows():
+                for cell in row:
+                    if cell.data_type == "f":
+                        cell.data_type = "s"
             for row_number in header_rows[ws.title]:
                 for cell in ws[row_number]:
                     cell.font = header_font
