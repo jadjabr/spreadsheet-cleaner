@@ -116,6 +116,14 @@ In demo mode, uploads are limited to 3 files of up to 200 rows and 1 MB each, an
 a contact line at the bottom. The built-in demo files still work. Without `DEMO_MODE`
 there are no limits, and the command-line tool is never limited.
 
+Demo mode also tells the server to refuse any upload over 1 MB, and rejects Excel files
+that would unpack to more than 10 MB. If you host the demo publicly, set the same limit
+in the hosting configuration as well, so it applies from the moment the server starts:
+
+```
+STREAMLIT_SERVER_MAX_UPLOAD_SIZE=1
+```
+
 ## Optional: one row per customer
 
 By default, two rows are only treated as duplicates when every column matches. If the

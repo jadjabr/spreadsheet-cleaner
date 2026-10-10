@@ -11,9 +11,11 @@ for a public demo. Without it there are no limits.
 
 import io
 import os
+import zipfile
 
 import pandas as pd
 import streamlit as st
+from streamlit import config
 
 from clean import clean, detect_headings, read_file, write_workbook
 from make_demo_data import build_demo_files
@@ -26,6 +28,8 @@ DEMO_MAX_FILES = 3
 DEMO_MAX_ROWS = 200
 # Caps what a visitor can make the server hold and parse; the row limit alone is only checked after parsing.
 DEMO_MAX_MB = 1
+# An .xlsx is a zip; a tiny one can unpack to gigabytes, so the unpacked size is capped too.
+DEMO_MAX_UNPACKED_MB = 10
 DEMO_MESSAGE = "This is a demo. For a version tailored to your data, contact info.sendovia@gmail.com"
 
 
@@ -56,6 +60,25 @@ def headings_for(files):
     return detect_headings(as_sources(files))
 
 
+def enforce_demo_upload_cap():
+    """Make the server itself refuse oversized uploads in demo mode.
+
+    The uploader's own size limit is only checked in the visitor's browser. This sets the
+    limit the server applies to every upload request, whatever sent it.
+    """
+    try:
+        config.set_option("server.maxUploadSize", DEMO_MAX_MB)
+    except Exception:
+        # Still covered by the size check in over_demo_limits, which runs before any parsing.
+        pass
+
+
+def unpacked_size(content):
+    """Total size an .xlsx would unpack to, read from the zip directory without unpacking it."""
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        return sum(entry.file_size for entry in archive.infolist())
+
+
 def over_demo_limits(uploads):
     """Describe how the uploads exceed the demo limits, or return None if they don't.
 
@@ -66,6 +89,14 @@ def over_demo_limits(uploads):
     for upload in uploads:
         if upload.size > DEMO_MAX_MB * 1024 * 1024:
             return f"{upload.name} is larger than {DEMO_MAX_MB} MB, the most the demo allows per file."
+    for upload in uploads:
+        if not upload.name.lower().endswith(".csv"):
+            try:
+                too_big = unpacked_size(upload.getvalue()) > DEMO_MAX_UNPACKED_MB * 1024 * 1024
+            except zipfile.BadZipFile:
+                return f"{upload.name} is not a valid .xlsx file."
+            if too_big:
+                return f"{upload.name} unpacks to more than {DEMO_MAX_UNPACKED_MB} MB, the most the demo allows."
     for upload in uploads:
         try:
             rows = len(read_file(upload.name, io.BytesIO(upload.getvalue())))
@@ -125,6 +156,8 @@ st.write(
 )
 
 DEMO = demo_mode()
+if DEMO:
+    enforce_demo_upload_cap()
 
 
 def page():
