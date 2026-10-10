@@ -15,3 +15,4 @@ input/*
 # Local agent-skill symlinks that point into .venv
 .agents/
 .claude/
+\n# Streamlit secrets are never committed\n.streamlit/secrets.toml\n

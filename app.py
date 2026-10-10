@@ -4,19 +4,39 @@ Run with:
     streamlit run app.py
 
 Uploaded files are only ever held in memory; nothing is written to disk.
+
+Set DEMO_MODE to "true" (environment variable or Streamlit secret) to cap uploads
+for a public demo. Without it there are no limits.
 """
 
 import io
+import os
 
 import pandas as pd
 import streamlit as st
 
-from clean import clean, detect_headings, write_workbook
+from clean import clean, detect_headings, read_file, write_workbook
 from make_demo_data import build_demo_files
 
 NO_KEY = "None (only remove exact duplicates)"
 PREVIEW_ROWS = 100
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+DEMO_MAX_FILES = 3
+DEMO_MAX_ROWS = 200
+DEMO_MESSAGE = "This is a demo. For a version tailored to your data, contact info.sendovia@gmail.com"
+
+
+def demo_mode():
+    """True when DEMO_MODE is "true" in the environment or in Streamlit secrets."""
+    value = os.environ.get("DEMO_MODE")
+    if value is None:
+        try:
+            value = st.secrets.get("DEMO_MODE")
+        except Exception:
+            # No secrets file, which is the normal case when running locally.
+            value = None
+    return str(value).strip().lower() == "true"
 
 
 def as_sources(files):
@@ -32,6 +52,21 @@ def demo_files():
 @st.cache_data(show_spinner=False)
 def headings_for(files):
     return detect_headings(as_sources(files))
+
+
+@st.cache_data(show_spinner=False)
+def over_demo_limits(files):
+    """Describe how the uploads exceed the demo limits, or return None if they don't."""
+    if len(files) > DEMO_MAX_FILES:
+        return f"You uploaded {len(files)} files; the demo allows up to {DEMO_MAX_FILES}."
+    for name, source in as_sources(files):
+        try:
+            rows = len(read_file(name, source))
+        except Exception:
+            continue  # unreadable files are reported when cleaning
+        if rows > DEMO_MAX_ROWS:
+            return f"{name} has {rows} rows; the demo allows up to {DEMO_MAX_ROWS} rows per file."
+    return None
 
 
 def run_clean(files, key, dayfirst):
@@ -82,48 +117,64 @@ st.write(
     "tidy dates and phone numbers, duplicates removed."
 )
 
-uploads = st.file_uploader("Upload .xlsx or .csv files", type=["xlsx", "csv"], accept_multiple_files=True)
-if st.button("Load demo files", help="Five made-up customer lists with messy headings, dates and duplicates."):
-    st.session_state["demo"] = True
+DEMO = demo_mode()
 
-if uploads:
-    # Alphabetical, like the command-line tool, so "first value wins" behaves the same.
-    files = tuple(sorted((upload.name, upload.getvalue()) for upload in uploads))
-elif st.session_state.get("demo"):
-    files = tuple(demo_files())
-    st.info("Using the demo files: " + ", ".join(name for name, _ in files))
-    if st.button("Remove demo files"):
-        st.session_state["demo"] = False
-        st.rerun()
-else:
-    st.stop()
 
-headings = headings_for(files)
-if not headings:
-    st.error("None of those files could be read. Check they are real .xlsx or .csv files.")
-    st.stop()
+def page():
+    uploads = st.file_uploader("Upload .xlsx or .csv files", type=["xlsx", "csv"], accept_multiple_files=True)
+    if DEMO:
+        st.caption(f"Demo limits: up to {DEMO_MAX_FILES} files, {DEMO_MAX_ROWS} rows per file.")
+    if st.button("Load demo files", help="Five made-up customer lists with messy headings, dates and duplicates."):
+        st.session_state["demo"] = True
 
-key_choice = st.selectbox(
-    "Merge rows that share the same value in this column",
-    [NO_KEY] + headings,
-    help="For example, choose Email to get one row per customer. Blanks in one file are filled from another.",
-)
-dayfirst = st.checkbox("Dates are day-first (03/04/2024 means 3 April, not March 4)")
-key = None if key_choice == NO_KEY else key_choice
+    if uploads:
+        # Alphabetical, like the command-line tool, so "first value wins" behaves the same.
+        files = tuple(sorted((upload.name, upload.getvalue()) for upload in uploads))
+        problem = over_demo_limits(files) if DEMO else None
+        if problem:
+            st.error(f"{problem} {DEMO_MESSAGE}")
+            return
+    elif st.session_state.get("demo"):
+        files = tuple(demo_files())
+        st.info("Using the demo files: " + ", ".join(name for name, _ in files))
+        if st.button("Remove demo files"):
+            st.session_state["demo"] = False
+            st.rerun()
+    else:
+        return
 
-# Identifies exactly what was cleaned, so an old result is never shown against new inputs.
-signature = (files, key, dayfirst)
+    headings = headings_for(files)
+    if not headings:
+        st.error("None of those files could be read. Check they are real .xlsx or .csv files.")
+        return
 
-if st.button("Clean", type="primary"):
-    try:
-        with st.spinner("Cleaning..."):
-            st.session_state["result"] = (signature, run_clean(files, key, dayfirst))
-    except ValueError as error:
-        st.session_state.pop("result", None)
-        st.error(str(error))
+    key_choice = st.selectbox(
+        "Merge rows that share the same value in this column",
+        [NO_KEY] + headings,
+        help="For example, choose Email to get one row per customer. Blanks in one file are filled from another.",
+    )
+    dayfirst = st.checkbox("Dates are day-first (03/04/2024 means 3 April, not March 4)")
+    key = None if key_choice == NO_KEY else key_choice
 
-stored = st.session_state.get("result")
-if stored and stored[0] == signature:
-    show_result(stored[1])
-elif stored:
-    st.caption("Files or options have changed. Click Clean to update the result.")
+    # Identifies exactly what was cleaned, so an old result is never shown against new inputs.
+    signature = (files, key, dayfirst)
+
+    if st.button("Clean", type="primary"):
+        try:
+            with st.spinner("Cleaning..."):
+                st.session_state["result"] = (signature, run_clean(files, key, dayfirst))
+        except ValueError as error:
+            st.session_state.pop("result", None)
+            st.error(str(error))
+
+    stored = st.session_state.get("result")
+    if stored and stored[0] == signature:
+        show_result(stored[1])
+    elif stored:
+        st.caption("Files or options have changed. Click Clean to update the result.")
+
+
+page()
+if DEMO:
+    st.divider()
+    st.caption(DEMO_MESSAGE)

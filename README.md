@@ -96,6 +96,26 @@ your files are not sent anywhere and are not saved to disk.
 The first time you run it, Streamlit may ask for an email address in the terminal. Just
 press Enter to skip.
 
+### Demo mode (for a public demo of the web page)
+
+If you put the web page online as a public demo, you can cap what visitors can upload.
+Set `DEMO_MODE` to `true`, either as an environment variable:
+
+```
+DEMO_MODE=true .venv/bin/streamlit run app.py
+```
+
+or as a Streamlit secret (in your hosting provider's secrets settings, or in a
+`.streamlit/secrets.toml` file):
+
+```
+DEMO_MODE = "true"
+```
+
+In demo mode, uploads are limited to 3 files of up to 200 rows each, and the page shows
+a contact line at the bottom. The built-in demo files still work. Without `DEMO_MODE`
+there are no limits, and the command-line tool is never limited.
+
 ## Optional: one row per customer
 
 By default, two rows are only treated as duplicates when every column matches. If the
