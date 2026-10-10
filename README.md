@@ -96,6 +96,13 @@ your files are not sent anywhere and are not saved to disk.
 The first time you run it, Streamlit may ask for an email address in the terminal. Just
 press Enter to skip.
 
+### Branding the web page
+
+- **Colours** are set in `.streamlit/config.toml`. Change the hex codes there and restart
+  the page.
+- **Logo:** save it as `assets/logo.svg` or `assets/logo.png` and it appears in the top
+  corner of the page. With no logo file, the page simply shows none.
+
 ### Demo mode (for a public demo of the web page)
 
 If you put the web page online as a public demo, you can cap what visitors can upload.
@@ -117,7 +124,7 @@ a contact line at the bottom. The built-in demo files still work. Without `DEMO_
 there are no limits, and the command-line tool is never limited.
 
 Demo mode also tells the server to refuse any upload over 1 MB, and rejects Excel files
-that would unpack to more than 10 MB. If you host the demo publicly, set the same limit
+that would unpack to more than 10 MB. Files with more than 50 columns are rejected too. If you host the demo publicly, set the same limit
 in the hosting configuration as well, so it applies from the moment the server starts:
 
 ```

@@ -1,0 +1,18 @@
+# Look and feel of the web page (app.py). Colours only; no cleaning behaviour lives here.
+#
+# Sendovia brand colours, taken from the Sendovia brand kit (see BRAND.md and assets/brand-tokens.json).
+
+[theme]
+base = "dark"
+
+primaryColor = "#1E4F9C"              # brand-blue: buttons, highlights
+linkColor = "#7FA8F0"                 # accent-text: blue text on the black ground
+backgroundColor = "#0B0B0C"           # ground: page background
+secondaryBackgroundColor = "#16171A"  # surface-raised: panels, inputs, table header
+textColor = "#F5F6F8"                 # ink: text
+
+borderColor = "#2E3036"               # hairline
+dataframeBorderColor = "#2E3036"
+dataframeHeaderBackgroundColor = "#16171A"
+dataframeHeaderTextColor = "#F5F6F8"
+baseRadius = "medium"
