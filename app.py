@@ -24,6 +24,8 @@ XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 DEMO_MAX_FILES = 3
 DEMO_MAX_ROWS = 200
+# Caps what a visitor can make the server hold and parse; the row limit alone is only checked after parsing.
+DEMO_MAX_MB = 1
 DEMO_MESSAGE = "This is a demo. For a version tailored to your data, contact info.sendovia@gmail.com"
 
 
@@ -49,23 +51,28 @@ def demo_files():
     return sorted(build_demo_files().items())
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, max_entries=20)
 def headings_for(files):
     return detect_headings(as_sources(files))
 
 
-@st.cache_data(show_spinner=False)
-def over_demo_limits(files):
-    """Describe how the uploads exceed the demo limits, or return None if they don't."""
-    if len(files) > DEMO_MAX_FILES:
-        return f"You uploaded {len(files)} files; the demo allows up to {DEMO_MAX_FILES}."
-    for name, source in as_sources(files):
+def over_demo_limits(uploads):
+    """Describe how the uploads exceed the demo limits, or return None if they don't.
+
+    The count and size checks come first so an oversized upload is never parsed.
+    """
+    if len(uploads) > DEMO_MAX_FILES:
+        return f"You uploaded {len(uploads)} files; the demo allows up to {DEMO_MAX_FILES}."
+    for upload in uploads:
+        if upload.size > DEMO_MAX_MB * 1024 * 1024:
+            return f"{upload.name} is larger than {DEMO_MAX_MB} MB, the most the demo allows per file."
+    for upload in uploads:
         try:
-            rows = len(read_file(name, source))
+            rows = len(read_file(upload.name, io.BytesIO(upload.getvalue())))
         except Exception:
             continue  # unreadable files are reported when cleaning
         if rows > DEMO_MAX_ROWS:
-            return f"{name} has {rows} rows; the demo allows up to {DEMO_MAX_ROWS} rows per file."
+            return f"{upload.name} has {rows} rows; the demo allows up to {DEMO_MAX_ROWS} rows per file."
     return None
 
 
@@ -121,19 +128,24 @@ DEMO = demo_mode()
 
 
 def page():
-    uploads = st.file_uploader("Upload .xlsx or .csv files", type=["xlsx", "csv"], accept_multiple_files=True)
+    uploads = st.file_uploader(
+        "Upload .xlsx or .csv files",
+        type=["xlsx", "csv"],
+        accept_multiple_files=True,
+        max_upload_size=DEMO_MAX_MB if DEMO else None,
+    )
     if DEMO:
-        st.caption(f"Demo limits: up to {DEMO_MAX_FILES} files, {DEMO_MAX_ROWS} rows per file.")
+        st.caption(f"Demo limits: up to {DEMO_MAX_FILES} files, {DEMO_MAX_ROWS} rows and {DEMO_MAX_MB} MB per file.")
     if st.button("Load demo files", help="Five made-up customer lists with messy headings, dates and duplicates."):
         st.session_state["demo"] = True
 
     if uploads:
         # Alphabetical, like the command-line tool, so "first value wins" behaves the same.
-        files = tuple(sorted((upload.name, upload.getvalue()) for upload in uploads))
-        problem = over_demo_limits(files) if DEMO else None
+        problem = over_demo_limits(uploads) if DEMO else None
         if problem:
             st.error(f"{problem} {DEMO_MESSAGE}")
             return
+        files = tuple(sorted((upload.name, upload.getvalue()) for upload in uploads))
     elif st.session_state.get("demo"):
         files = tuple(demo_files())
         st.info("Using the demo files: " + ", ".join(name for name, _ in files))

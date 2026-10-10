@@ -112,7 +112,7 @@ or as a Streamlit secret (in your hosting provider's secrets settings, or in a
 DEMO_MODE = "true"
 ```
 
-In demo mode, uploads are limited to 3 files of up to 200 rows each, and the page shows
+In demo mode, uploads are limited to 3 files of up to 200 rows and 1 MB each, and the page shows
 a contact line at the bottom. The built-in demo files still work. Without `DEMO_MODE`
 there are no limits, and the command-line tool is never limited.
 
