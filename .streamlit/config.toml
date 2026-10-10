@@ -1,18 +1,22 @@
-# Look and feel of the web page (app.py). Colours only; no cleaning behaviour lives here.
-#
-# Sendovia brand colours, taken from the Sendovia brand kit (see BRAND.md and assets/brand-tokens.json).
+# Look and feel of the web page (app.py), using the Sendovia brand tokens
+# (assets/brand-tokens.json, dark theme). No cleaning behaviour lives here.
 
 [theme]
 base = "dark"
 
-primaryColor = "#1E4F9C"              # brand-blue: buttons, highlights
-linkColor = "#7FA8F0"                 # accent-text: blue text on the black ground
-backgroundColor = "#0B0B0C"           # ground: page background
-secondaryBackgroundColor = "#16171A"  # surface-raised: panels, inputs, table header
-textColor = "#F5F6F8"                 # ink: text
+primaryColor = "#1E4F9C"              # brand-blue: buttons and highlights, carries white text
+backgroundColor = "#0B0B0C"           # ground
+secondaryBackgroundColor = "#16171A"  # surface-raised: inputs and quiet panels
+textColor = "#F5F6F8"                 # ink
+linkColor = "#7FA8F0"                 # accent-text: blue text on black
 
 borderColor = "#2E3036"               # hairline
 dataframeBorderColor = "#2E3036"
 dataframeHeaderBackgroundColor = "#16171A"
-dataframeHeaderTextColor = "#F5F6F8"
-baseRadius = "medium"
+dataframeHeaderTextColor = "#B9BCC4"  # ink-muted
+
+font = "'DM Sans':https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"
+baseFontSize = 15
+headingFontWeights = 700
+baseRadius = "16px"                   # radius-lg
+buttonRadius = "9px"                  # radius-sm

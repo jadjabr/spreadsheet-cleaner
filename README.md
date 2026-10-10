@@ -119,9 +119,13 @@ or as a Streamlit secret (in your hosting provider's secrets settings, or in a
 DEMO_MODE = "true"
 ```
 
-In demo mode, uploads are limited to 3 files of up to 200 rows and 1 MB each, and the page shows
-a contact line at the bottom. The built-in demo files still work. Without `DEMO_MODE`
+In demo mode, uploads are limited to 3 files of up to 200 rows and 1 MB each. The built-in demo files still work. Without `DEMO_MODE`
 there are no limits, and the command-line tool is never limited.
+
+To show your contact details to demo visitors, also set `CONTACT_EMAIL` the same way
+(environment variable or Streamlit secret), for example `CONTACT_EMAIL = "you@example.com"`.
+The page then shows a contact line at the bottom and in the over-limit message. If it
+isn't set, no contact details are shown.
 
 Demo mode also tells the server to refuse any upload over 1 MB, and rejects Excel files
 that would unpack to more than 10 MB. Files with more than 50 columns are rejected too. If you host the demo publicly, set the same limit

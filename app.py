@@ -6,7 +6,8 @@ Run with:
 Uploaded files are only ever held in memory; nothing is written to disk.
 
 Set DEMO_MODE to "true" (environment variable or Streamlit secret) to cap uploads
-for a public demo. Without it there are no limits.
+for a public demo. Without it there are no limits. Set CONTACT_EMAIL the same way to
+show a contact line in demo mode.
 """
 
 import csv
@@ -26,6 +27,8 @@ from make_demo_data import build_demo_files
 HERE = Path(__file__).resolve().parent
 # The first of these that exists is shown in the page header.
 LOGO_FILES = ("assets/logo.svg", "assets/logo.png")
+# Square icon for the browser tab, if present.
+MARK_FILE = "assets/sendovia-mark.svg"
 
 NO_KEY = "None (only remove exact duplicates)"
 PREVIEW_ROWS = 100
@@ -41,19 +44,32 @@ DEMO_MAX_UNPACKED_MB = 10
 # or tall. These cap the shape itself, and are checked by streaming before anything is loaded.
 DEMO_MAX_COLUMNS = 50
 DEMO_MAX_SHEET_ROWS = 1000
-DEMO_MESSAGE = "This is a demo. For a version tailored to your data, contact info.sendovia@gmail.com"
+
+
+def setting(name):
+    """Read a setting from the environment or Streamlit secrets; "" if it isn't set."""
+    value = os.environ.get(name)
+    if value is None:
+        try:
+            value = st.secrets.get(name)
+        except Exception:
+            # No secrets file, which is the normal case when running locally.
+            value = None
+    return "" if value is None else str(value).strip()
 
 
 def demo_mode():
     """True when DEMO_MODE is "true" in the environment or in Streamlit secrets."""
-    value = os.environ.get("DEMO_MODE")
-    if value is None:
-        try:
-            value = st.secrets.get("DEMO_MODE")
-        except Exception:
-            # No secrets file, which is the normal case when running locally.
-            value = None
-    return str(value).strip().lower() == "true"
+    return setting("DEMO_MODE").lower() == "true"
+
+
+def demo_messages():
+    """The (limit message, footer) for demo mode; no contact details unless CONTACT_EMAIL is set."""
+    email = setting("CONTACT_EMAIL")
+    if not email:
+        return "This is a demo version with limited file size.", None
+    contact = f"This is a demo. For a version tailored to your data, contact {email}"
+    return contact, contact
 
 
 def as_sources(files):
@@ -212,7 +228,12 @@ def show_result(result):
         )
 
 
-st.set_page_config(page_title="Spreadsheet Cleaner", page_icon=":material/table_view:", layout="wide")
+mark = HERE / MARK_FILE
+st.set_page_config(
+    page_title="Spreadsheet Cleaner",
+    page_icon=str(mark) if mark.is_file() else ":material/table_view:",
+    layout="wide",
+)
 logo = find_logo()
 if logo:
     st.logo(logo, size="large")
@@ -223,6 +244,7 @@ st.write(
 )
 
 DEMO = demo_mode()
+DEMO_MESSAGE, DEMO_FOOTER = demo_messages()
 if DEMO:
     enforce_demo_upload_cap()
 
@@ -291,9 +313,15 @@ def options_step(files, headings):
     return signature
 
 
+def step_heading(number, title):
+    with st.container(horizontal=True, vertical_alignment="center"):
+        st.badge(str(number), color="primary")
+        st.subheader(title, anchor=False)
+
+
 def page():
     with st.container(border=True):
-        st.subheader(":material/upload_file: Step 1 · Upload", anchor=False)
+        step_heading(1, "Upload")
         files = upload_step()
         headings = headings_for(files) if files else []
         if files and not headings:
@@ -302,14 +330,14 @@ def page():
 
     signature = None
     with st.container(border=True):
-        st.subheader(":material/tune: Step 2 · Options", anchor=False)
+        step_heading(2, "Options")
         if files:
             signature = options_step(files, headings)
         else:
             st.caption("Add files in step 1 to choose your options.")
 
     with st.container(border=True):
-        st.subheader(":material/download: Step 3 · Download", anchor=False)
+        step_heading(3, "Download")
         stored = st.session_state.get("result")
         if signature and stored and stored[0] == signature:
             show_result(stored[1])
@@ -322,6 +350,6 @@ def page():
 
 
 page()
-if DEMO:
+if DEMO and DEMO_FOOTER:
     st.divider()
-    st.caption(DEMO_MESSAGE)
+    st.caption(DEMO_FOOTER)
